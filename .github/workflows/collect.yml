@@ -41,7 +41,9 @@ jobs:
           git config user.name  "traffic-bot"
           git config user.email "traffic-bot@users.noreply.github.com"
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
-          git add data/travel_times.csv
+          # -f because data/travel_times.csv is gitignored (to keep local fake
+          # data out of the repo); the real data must still be committed here.
+          git add -f data/travel_times.csv
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
