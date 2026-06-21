@@ -38,6 +38,7 @@
   figcaption { font-family: var(--sans); font-size: 0.78rem; color: var(--muted);
                line-height: 1.5; margin-top: 10px; }
   figcaption b { color: var(--ink); }
+  .hint { display: block; margin-top: 5px; font-style: italic; color: var(--faint); }
 
   .cards { display: flex; flex-direction: column; gap: 9px; overflow-y: auto; min-height: 0; padding-right: 2px; }
   .card { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
@@ -130,10 +131,9 @@
     <figure class="panel-main">
       <div class="chart-wrap"><canvas id="chart"></canvas></div>
       <figcaption><b>Figure 1.</b> Median travel time by hour of day (IST), one
-      line per group. The dashed line marks free-flow (no-traffic) time. Hover a
-      point to see the range most trips fall within for that hour (its 10th to
-      90th percentile). Travel times are Google Routes API estimates, not
-      measurements of individual vehicles.</figcaption>
+      line per group. The dashed line marks free-flow (no-traffic) time.
+      <span class="hint">Hover a point to see the range most trips fall within for
+      that hour (its 10th to 90th percentile).</span></figcaption>
     </figure>
     <div class="cards" id="cards"></div>
   </div>
