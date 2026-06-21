@@ -74,7 +74,7 @@
                 background: #fff; cursor: pointer; }
   .actions { margin: 9px 0 0; }
   .linkbtn { font-family: var(--sans); font-size: 0.85rem; color: #0072B2;
-             background: none; border: 0; padding: 0; cursor: pointer; }
+             background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; }
   .linkbtn:hover { text-decoration: underline; }
   .sep { color: var(--faint); margin: 0 8px; font-family: var(--sans); }
   #routeMap iframe { width: 100%; height: 300px; border: 1px solid var(--line);
@@ -97,6 +97,8 @@
       <button class="linkbtn" id="whyMeasureBtn">Why measure this?</button>
       <span class="sep">·</span>
       <button class="linkbtn" id="routeBtn">View the exact route measured →</button>
+      <span class="sep">·</span>
+      <a class="linkbtn" id="contactLink" href="#">Have a suggestion?</a>
     </p>
   </header>
 
@@ -358,6 +360,17 @@ routeDlg.addEventListener("click", (e) => { if (e.target === routeDlg) routeDlg.
 const wmDlg = document.getElementById("whyMeasure");
 document.getElementById("whyMeasureBtn").addEventListener("click", () => wmDlg.showModal());
 wmDlg.addEventListener("click", (e) => { if (e.target === wmDlg) wmDlg.close(); });
+
+// Contact link. The address is assembled at runtime from parts so it is not
+// present as a harvestable string in the page source. The +coastal tag lets the
+// recipient filter and trace these messages.
+(function () {
+  const user = ["jayvaidya96", "coastal"].join("+");
+  const domain = ["gmail", "com"].join(".");
+  const subject = "Suggestion: Coastal Road travel-time study";
+  document.getElementById("contactLink").href =
+    `mailto:${user}@${domain}?subject=${encodeURIComponent(subject)}`;
+})();
 
 document.getElementById("seg").addEventListener("click", (e) => {
   const btn = e.target.closest("button"); if (!btn) return;
