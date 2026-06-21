@@ -1,17 +1,11 @@
 name: collect-travel-times
 
 on:
-  schedule:
-    # Every 10 minutes, only during 07:00-22:50 IST (the 7am-11pm collection
-    # window). GitHub cron is UTC; IST is UTC+5:30, so the window is 01:30-17:20
-    # UTC. The :30 offset is a multiple of 10 min, so 10-min cadence is preserved;
-    # only the hour boundaries shift, which is why this needs three lines.
-    # Runs may be delayed under platform load, but each row logs its real
-    # timestamp, so aggregates are unaffected.
-    - cron: "30,40,50 1 * * *"   # 07:00-07:20 IST
-    - cron: "*/10 2-16 * * *"    # 07:30-22:20 IST
-    - cron: "0,10,20 17 * * *"   # 22:30-22:50 IST
-  workflow_dispatch: {}   # lets you trigger a manual run to test
+  # Triggered externally by cron-job.org (every 10 min, 07:00-23:00 IST) via the
+  # workflow_dispatch API -- more punctual than GitHub's built-in cron, which
+  # silently drops scheduled runs under load. The GitHub `schedule:` trigger was
+  # removed to avoid double-firing (duplicate readings + double API cost).
+  workflow_dispatch: {}
 
 # Prevent overlapping runs from racing on the same CSV / git push.
 concurrency:
