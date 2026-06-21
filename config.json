@@ -1,0 +1,11 @@
+{
+  "_comment": "Confirmed coordinates for the southbound Coastal Road exit toward Napean Sea Road. Travel time is measured ONE way: origin -> destination. To change a point, right-click the spot in Google Maps and click the coordinates to copy.",
+  "routes": [
+    {
+      "id": "coastal_to_napeansea",
+      "name": "Coastal Road (Breach Candy) -> Napean Sea Road",
+      "origin":      { "name": "Coastal Road southbound nr Breach Candy", "lat": 18.972473, "lng": 72.802424 },
+      "destination": { "name": "Napean Sea Road",                          "lat": 18.9615,   "lng": 72.8018889 }
+    }
+  ]
+}

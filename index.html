@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Exiting the Coastal Road southbound at Breach Candy — Travel-Time Study</title>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --ink: #1a1a1a; --muted: #595f66; --faint: #8a9099; --line: #c9ccd1;
+    --serif: "Charter", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: "Helvetica Neue", Arial, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: var(--serif); color: var(--ink); background: #fff;
+         max-width: 1180px; margin: 0 auto; padding: 24px 24px 18px;
+         line-height: 1.5; font-size: 16px; display: flex; flex-direction: column; }
+  h1 { font-size: 1.5rem; font-weight: 600; line-height: 1.22; margin: 0 0 5px; letter-spacing: -0.01em; }
+  p.dek { font-family: var(--sans); color: var(--muted); font-size: 0.92rem;
+          margin: 0; max-width: 78ch; line-height: 1.5; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+
+  .bar { display: flex; align-items: center; justify-content: space-between;
+         gap: 16px; margin: 16px 0 14px; font-family: var(--sans); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .seg button { font-family: var(--sans); font-size: 0.85rem; padding: 7px 14px; border: 0;
+                background: #fff; color: var(--muted); cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button.active { background: var(--ink); color: #fff; }
+  .meta { font-family: var(--sans); color: var(--faint); font-size: 0.8rem; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(248px, 1fr);
+            gap: 24px; flex: 1; min-height: 0; }
+  .panel-main { display: flex; flex-direction: column; min-height: 0; }
+  .chart-wrap { position: relative; flex: 1; min-height: 320px; }
+  figcaption { font-family: var(--sans); font-size: 0.78rem; color: var(--muted);
+               line-height: 1.5; margin-top: 10px; }
+  figcaption b { color: var(--ink); }
+
+  .cards { display: flex; flex-direction: column; gap: 9px; overflow-y: auto; min-height: 0; padding-right: 2px; }
+  .card { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
+  .card-h { display: flex; align-items: center; gap: 7px; font-family: var(--sans); font-size: 0.82rem; }
+  .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+  .nm { font-weight: 600; color: var(--ink); }
+  .pk { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .spark { width: 100%; height: 34px; display: block; margin: 5px 0 3px; }
+  .card-f { font-family: var(--sans); font-size: 0.74rem; color: var(--faint);
+            font-variant-numeric: tabular-nums; }
+  footer { font-family: var(--sans); font-size: 0.74rem; color: var(--faint);
+           margin-top: 12px; }
+
+  .info { font-family: var(--sans); font-size: 0.66rem; font-weight: 700;
+          width: 15px; height: 15px; line-height: 13px; text-align: center;
+          border: 1px solid var(--line); border-radius: 50%; background: #fff;
+          color: var(--muted); cursor: pointer; padding: 0; margin-left: 6px;
+          vertical-align: 1px; }
+  .info:hover { border-color: var(--ink); color: var(--ink); }
+  dialog#why { max-width: 470px; width: calc(100% - 32px); border: 1px solid var(--line);
+               border-radius: 6px; padding: 0; color: var(--ink); }
+  dialog#why::backdrop { background: rgba(0, 0, 0, 0.35); }
+  .dlg { padding: 22px 24px; }
+  .dlg h2 { font-family: var(--serif); font-size: 1.15rem; font-weight: 600; margin: 0 0 12px; }
+  .dlg p { font-family: var(--sans); font-size: 0.88rem; line-height: 1.55; margin: 0 0 12px; }
+  .dlg h3 { font-family: var(--sans); font-size: 0.72rem; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--faint); margin: 16px 0 7px; }
+  .dlg ul { margin: 0; padding-left: 18px; font-family: var(--sans); font-size: 0.83rem; line-height: 1.45; }
+  .dlg li { margin-bottom: 6px; }
+  .dlg a { color: #0072B2; text-decoration: none; }
+  .dlg a:hover { text-decoration: underline; }
+  .dlg .close { margin-top: 16px; font-family: var(--sans); font-size: 0.84rem;
+                padding: 6px 14px; border: 1px solid var(--line); border-radius: 4px;
+                background: #fff; cursor: pointer; }
+  .actions { margin: 9px 0 0; }
+  .linkbtn { font-family: var(--sans); font-size: 0.85rem; color: #0072B2;
+             background: none; border: 0; padding: 0; cursor: pointer; }
+  .linkbtn:hover { text-decoration: underline; }
+  .sep { color: var(--faint); margin: 0 8px; font-family: var(--sans); }
+  #routeMap iframe { width: 100%; height: 300px; border: 1px solid var(--line);
+                     border-radius: 4px; display: block; }
+  .coords { font-family: var(--sans); font-size: 0.84rem; line-height: 1.5; margin: 12px 0 0; }
+  .coords b { font-weight: 600; }
+  .rnote { font-family: var(--sans); font-size: 0.8rem; color: var(--muted); margin: 8px 0 0; }
+  .rnote a, .coords a { color: #0072B2; text-decoration: none; }
+  .rnote a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>How long does exiting the Coastal Road southbound at Breach Candy actually take?</h1>
+    <p class="dek">A continuous measurement of southbound travel time across the
+    segment exiting the Coastal Road toward Napean Sea Road, sampled every ten
+    minutes from the Google Routes API.<button class="info" id="whyBtn"
+    aria-label="Why is this number accurate?" title="Why is this accurate?">i</button></p>
+    <p class="actions">
+      <button class="linkbtn" id="whyMeasureBtn">Why measure this?</button>
+      <span class="sep">·</span>
+      <button class="linkbtn" id="routeBtn">View the exact route measured →</button>
+    </p>
+  </header>
+
+  <div class="bar">
+    <div class="seg" id="seg">
+      <button data-mode="wk" class="active">Weekday / Weekend</button>
+      <button data-mode="dow">Day of week</button>
+    </div>
+    <span class="meta" id="meta">Loading data…</span>
+  </div>
+
+  <div class="layout">
+    <figure class="panel-main">
+      <div class="chart-wrap"><canvas id="chart"></canvas></div>
+      <figcaption><b>Figure 1.</b> Median travel time by hour of day (IST), one
+      line per group. The dashed line marks free-flow (no-traffic) time. Travel
+      times are Google Routes API estimates, not measurements of individual
+      vehicles.</figcaption>
+    </figure>
+    <div class="cards" id="cards"></div>
+  </div>
+
+  <footer id="foot"></footer>
+
+  <dialog id="why">
+    <div class="dlg">
+      <h2>Why this number reflects real traffic</h2>
+      <p>The figure is Google's live travel-time estimate for the segment. Google
+      produces it by combining anonymised location data from phones currently on
+      the road with historical patterns for that time and place, together with
+      reported incidents. Because each reading is taken live, it reflects
+      conditions at that moment, including jams, accidents and weather slowdowns,
+      rather than a fixed average of a typical day.</p>
+      <p>It is an estimate, not a measurement of any single vehicle, but it is the
+      same figure shown to the public in Google Maps. Google reports that its
+      arrival-time estimates are accurate for the large majority of trips, and
+      independent researchers have used the same Google travel-time data to study
+      congestion in Indian cities.</p>
+      <h3>Further reading</h3>
+      <ul>
+        <li><a href="https://blog.google/products/maps/google-maps-101-how-ai-helps-predict-traffic-and-determine-routes/" target="_blank" rel="noopener">Google — How AI helps predict traffic and determine routes</a></li>
+        <li><a href="https://deepmind.google/blog/traffic-prediction-with-advanced-graph-neural-networks/" target="_blank" rel="noopener">Google DeepMind — Improving travel-time predictions with graph neural networks</a></li>
+        <li><a href="https://www.cseindia.org/decoding-google-map-information-on-travel-time-to-understand-travel-speed-and-congestion-in-delhi-7805" target="_blank" rel="noopener">Centre for Science and Environment — Using Google Map travel-time data to study speed and congestion in Delhi</a></li>
+        <li><a href="https://arxiv.org/abs/2011.02359" target="_blank" rel="noopener">Modeling traffic congestion in developing countries using Google Maps data (arXiv)</a></li>
+      </ul>
+      <form method="dialog"><button class="close">Close</button></form>
+    </div>
+  </dialog>
+
+  <dialog id="whyMeasure">
+    <div class="dlg">
+      <h2>Why measure this?</h2>
+      <p>A civic decision about this stretch of road is under discussion, but the
+      conversation has so far rested on impressions and anecdote rather than
+      measurement. People disagree about how long the exit actually takes, and
+      how often it is slow.</p>
+      <p>This project exists to inform that decision with open data. It records
+      the travel time continuously and publishes every reading, so that anyone
+      can examine the evidence and reach their own conclusion. It does not argue
+      for any particular outcome. Its only aim is to make the facts about travel
+      time on this segment clear, public, and verifiable.</p>
+      <form method="dialog"><button class="close">Close</button></form>
+    </div>
+  </dialog>
+
+  <dialog id="routeDlg">
+    <div class="dlg">
+      <h2>Route measured</h2>
+      <div id="routeMap"></div>
+      <p class="coords" id="routeCoords"></p>
+      <p class="rnote" id="routeNote"></p>
+      <form method="dialog"><button class="close">Close</button></form>
+    </div>
+  </dialog>
+
+<script>
+const CSV_URL = "data/travel_times.csv";
+const WEEKDAY = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const WEEKEND = ["Sat", "Sun"];
+const DOW_ALL = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DOW_FULL = { Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday",
+                   Fri: "Friday", Sat: "Saturday", Sun: "Sunday" };
+// Okabe-Ito colourblind-safe palette.
+const PAL7 = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9", "#D55E00", "#444444"];
+
+if (window.Chart) {
+  Chart.defaults.font.family = "'Helvetica Neue', Arial, sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = "#595f66";
+}
+
+function pct(sorted, p) {
+  if (!sorted.length) return null;
+  if (sorted.length === 1) return sorted[0];
+  const k = (sorted.length - 1) * (p / 100);
+  const lo = Math.floor(k), hi = Math.min(lo + 1, sorted.length - 1);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (k - lo);
+}
+function hourLabel(h) { return String(h).padStart(2, "0") + ":00"; }
+
+let ROWS = [], GLOBAL_HOURS = [], FREEFLOW = null, MODE = "wk", chart;
+
+function seriesDefs(mode) {
+  if (mode === "wk")
+    return [{ name: "Weekday", dows: WEEKDAY, color: "#0072B2" },
+            { name: "Weekend", dows: WEEKEND, color: "#D55E00" }];
+  return DOW_ALL.map((d, i) => ({ name: DOW_FULL[d], dows: [d], color: PAL7[i] }));
+}
+
+function computeSeries(dows) {
+  const keep = new Set(dows), byHour = {}, all = [];
+  for (const r of ROWS) {
+    if (!keep.has(r.dow)) continue;
+    (byHour[r.hour] = byHour[r.hour] || []).push(r.min);
+    all.push(r.min);
+  }
+  const p50 = GLOBAL_HOURS.map(h => {
+    const v = byHour[h];
+    return v && v.length ? pct(v.slice().sort((a, b) => a - b), 50) : null;
+  });
+  const typical = all.length ? pct(all.slice().sort((a, b) => a - b), 50) : null;
+  let peak = { hour: null, val: -Infinity };
+  GLOBAL_HOURS.forEach((h, i) => { if (p50[i] != null && p50[i] > peak.val) peak = { hour: h, val: p50[i] }; });
+  return { p50, typical, peak, total: all.length };
+}
+
+function sparkSVG(p50, color, ymin, ymax) {
+  const W = 200, H = 36, pad = 3, span = (ymax - ymin) || 1, n = p50.length;
+  const pts = [];
+  p50.forEach((v, i) => {
+    if (v == null) return;
+    const x = n > 1 ? (i / (n - 1)) * W : W / 2;
+    const y = H - pad - ((v - ymin) / span) * (H - 2 * pad);
+    pts.push([x, y]);
+  });
+  if (!pts.length) return `<svg class="spark" viewBox="0 0 ${W} ${H}"></svg>`;
+  const path = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const top = pts.reduce((m, p) => (p[1] < m[1] ? p : m), pts[0]); // highest value = lowest y
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <polyline points="${path}" fill="none" stroke="${color}" stroke-width="1.5"
+      vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+    <circle cx="${top[0].toFixed(1)}" cy="${top[1].toFixed(1)}" r="2" fill="${color}"/>
+  </svg>`;
+}
+
+function renderCards(computed, ymin, ymax) {
+  document.getElementById("cards").innerHTML = computed.map(c => `
+    <div class="card">
+      <div class="card-h">
+        <span class="sw" style="background:${c.color}"></span>
+        <span class="nm">${c.name}</span>
+        <span class="pk">${c.peak.val > 0 ? c.peak.val.toFixed(1) + " min" : "—"}</span>
+      </div>
+      ${sparkSVG(c.p50, c.color, ymin, ymax)}
+      <div class="card-f">typical ${c.typical != null ? c.typical.toFixed(1) : "—"} min`
+        + (c.peak.hour != null ? ` · peak ${hourLabel(c.peak.hour)}` : "") + `</div>
+    </div>`).join("");
+}
+
+function renderChart(computed) {
+  const labels = GLOBAL_HOURS.map(hourLabel);
+  const datasets = computed.map(c => ({
+    label: c.name, data: c.p50, borderColor: c.color, backgroundColor: c.color,
+    fill: false, pointRadius: 2, borderWidth: 1.6, tension: 0, spanGaps: true,
+  }));
+  if (FREEFLOW != null) datasets.push({
+    label: "Free-flow", data: labels.map(() => FREEFLOW), borderColor: "#9aa0a8",
+    borderDash: [5, 4], borderWidth: 1, pointRadius: 0, fill: false, order: 99,
+  });
+  const grid = "rgba(26,26,26,0.06)";
+  const opts = {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: "index", intersect: false },
+    scales: {
+      y: { title: { display: true, text: "Travel time (minutes)" }, beginAtZero: false,
+           grid: { color: grid }, border: { color: "#c9ccd1" } },
+      x: { title: { display: true, text: "Hour of day (IST)" },
+           grid: { color: grid }, border: { color: "#c9ccd1" } },
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: "#1a1a1a", cornerRadius: 3, padding: 8,
+        callbacks: { label: (ctx) => ctx.parsed.y == null ? null
+          : `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} min` } },
+    },
+  };
+  if (chart) { chart.data = { labels, datasets }; chart.options = opts; chart.update(); }
+  else chart = new Chart(document.getElementById("chart"), { type: "line", data: { labels, datasets }, options: opts });
+}
+
+function render() {
+  if (!ROWS.length) return;
+  const computed = seriesDefs(MODE).map(d => ({ ...d, ...computeSeries(d.dows) }));
+  const vals = [];
+  computed.forEach(c => c.p50.forEach(v => { if (v != null) vals.push(v); }));
+  if (FREEFLOW != null) vals.push(FREEFLOW);
+  const ymin = Math.min(...vals), ymax = Math.max(...vals);
+  renderChart(computed);
+  renderCards(computed, ymin, ymax);
+}
+
+const whyDlg = document.getElementById("why");
+document.getElementById("whyBtn").addEventListener("click", () => whyDlg.showModal());
+whyDlg.addEventListener("click", (e) => { if (e.target === whyDlg) whyDlg.close(); });
+
+// Route map. Use a SEPARATE Maps Embed API key, restricted to this site's domain
+// by HTTP referrer. Do NOT reuse the billable Routes API key from the Actions
+// secret. Until a key is set, the dialog still shows coordinates + a Maps link.
+const EMBED_API_KEY = "YOUR_MAPS_EMBED_API_KEY";
+let ROUTE = null, routeBuilt = false;
+const routeDlg = document.getElementById("routeDlg");
+
+fetch("config.json")
+  .then(r => r.json())
+  .then(cfg => { ROUTE = cfg.routes && cfg.routes[0]; })
+  .catch(() => {});
+
+// Expected ~1.5 km one way. A median far from this, or readings scattered well
+// beyond it, usually means Google snapped to the wrong side and routed a U-turn.
+const EXPECTED_DIST_M = 1500, DIST_TOLERANCE = 0.20;
+const distOutOfTolerance = (d) => Math.abs(d - EXPECTED_DIST_M) > EXPECTED_DIST_M * DIST_TOLERANCE;
+let DIST_STATS = { median: null, total: 0, excluded: 0 };
+
+function distanceLine() {
+  if (!DIST_STATS.total) return "";
+  let line = `<br><b>Route distance</b> ${(DIST_STATS.median / 1000).toFixed(2)} km `
+    + `(median of ${DIST_STATS.total.toLocaleString()} readings)`;
+  if (DIST_STATS.excluded) line += ` <span style="color:#D55E00">— excluded ${DIST_STATS.excluded} `
+    + `reading(s) that differ from ${(EXPECTED_DIST_M / 1000).toFixed(1)} km by more than `
+    + `${Math.round(DIST_TOLERANCE * 100)}% (likely wrong-side snap)</span>`;
+  return line;
+}
+
+function buildRoute() {
+  if (routeBuilt || !ROUTE) return;
+  const o = ROUTE.origin, d = ROUTE.destination;
+  const oC = `${o.lat},${o.lng}`, dC = `${d.lat},${d.lng}`;
+  const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${oC}&destination=${dC}&travelmode=driving`;
+  document.getElementById("routeCoords").innerHTML =
+    `<b>From</b> ${o.name} (${oC})<br><b>To</b> ${d.name} (${dC})` + distanceLine();
+  const mapDiv = document.getElementById("routeMap");
+  const note = document.getElementById("routeNote");
+  if (EMBED_API_KEY && EMBED_API_KEY !== "YOUR_MAPS_EMBED_API_KEY") {
+    const src = `https://www.google.com/maps/embed/v1/directions?key=${EMBED_API_KEY}`
+      + `&origin=${oC}&destination=${dC}&mode=driving`;
+    mapDiv.innerHTML = `<iframe src="${src}" loading="lazy" allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    note.innerHTML = `<a href="${mapsLink}" target="_blank" rel="noopener">Open in Google Maps</a>`;
+  } else {
+    note.innerHTML = `The interactive map appears once a Maps Embed API key is configured. `
+      + `<a href="${mapsLink}" target="_blank" rel="noopener">Open the route in Google Maps</a>.`;
+  }
+  routeBuilt = true;
+}
+
+document.getElementById("routeBtn").addEventListener("click", () => { buildRoute(); routeDlg.showModal(); });
+routeDlg.addEventListener("click", (e) => { if (e.target === routeDlg) routeDlg.close(); });
+
+const wmDlg = document.getElementById("whyMeasure");
+document.getElementById("whyMeasureBtn").addEventListener("click", () => wmDlg.showModal());
+wmDlg.addEventListener("click", (e) => { if (e.target === wmDlg) wmDlg.close(); });
+
+document.getElementById("seg").addEventListener("click", (e) => {
+  const btn = e.target.closest("button"); if (!btn) return;
+  MODE = btn.dataset.mode;
+  for (const b of document.querySelectorAll("#seg button")) b.classList.toggle("active", b === btn);
+  render();
+});
+
+Papa.parse(CSV_URL, {
+  download: true, header: true, dynamicTyping: false,
+  complete: (res) => {
+    const parsed = res.data
+      .filter(r => r.status === "ok" && r.duration_sec)
+      .map(r => ({
+        dow: r.dow, hour: parseInt(r.hour_ist, 10),
+        min: parseInt(r.duration_sec, 10) / 60,
+        staticMin: r.static_duration_sec ? parseInt(r.static_duration_sec, 10) / 60 : NaN,
+        distM: r.distance_m ? parseInt(r.distance_m, 10) : NaN,
+      }))
+      .filter(r => Number.isFinite(r.hour) && Number.isFinite(r.min));
+
+    // Route-integrity gate: exclude wrong-snap readings from the analysed set.
+    const withDist = parsed.map(r => r.distM).filter(Number.isFinite).sort((a, b) => a - b);
+    DIST_STATS = {
+      total: withDist.length,
+      median: withDist.length ? withDist[Math.floor(withDist.length / 2)] : null,
+      excluded: parsed.filter(r => Number.isFinite(r.distM) && distOutOfTolerance(r.distM)).length,
+    };
+    ROWS = parsed.filter(r => !(Number.isFinite(r.distM) && distOutOfTolerance(r.distM)));
+    GLOBAL_HOURS = [...new Set(ROWS.map(r => r.hour))].sort((a, b) => a - b);
+    const statics = ROWS.map(r => r.staticMin).filter(Number.isFinite).sort((a, b) => a - b);
+    FREEFLOW = statics.length ? pct(statics, 50) : null;
+
+    const days = new Set(ROWS.map(r => r.dow)).size;
+    document.getElementById("meta").textContent =
+      `${ROWS.length.toLocaleString()} readings · ${GLOBAL_HOURS.length} hours/day`;
+    document.getElementById("foot").textContent =
+      "Hours with few readings are less reliable. Raw data and method are in the project repository.";
+    render();
+  },
+  error: () => { document.getElementById("meta").textContent = "Could not load data file."; },
+});
+</script>
+</body>
+</html>

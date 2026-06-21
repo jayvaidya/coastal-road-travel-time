@@ -1,0 +1,50 @@
+name: collect-travel-times
+
+on:
+  schedule:
+    # Every 10 minutes, only during 07:00-22:50 IST (the 7am-11pm collection
+    # window). GitHub cron is UTC; IST is UTC+5:30, so the window is 01:30-17:20
+    # UTC. The :30 offset is a multiple of 10 min, so 10-min cadence is preserved;
+    # only the hour boundaries shift, which is why this needs three lines.
+    # Runs may be delayed under platform load, but each row logs its real
+    # timestamp, so aggregates are unaffected.
+    - cron: "30,40,50 1 * * *"   # 07:00-07:20 IST
+    - cron: "*/10 2-16 * * *"    # 07:30-22:20 IST
+    - cron: "0,10,20 17 * * *"   # 22:30-22:50 IST
+  workflow_dispatch: {}   # lets you trigger a manual run to test
+
+# Prevent overlapping runs from racing on the same CSV / git push.
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Poll Routes API and append row
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: python collect.py
+
+      - name: Commit new data
+        run: |
+          git config user.name  "traffic-bot"
+          git config user.email "traffic-bot@users.noreply.github.com"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+          git add data/travel_times.csv
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "data: travel times $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          fi
