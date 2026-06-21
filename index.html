@@ -56,12 +56,6 @@
   .repo:hover { color: var(--ink); }
   .repo svg { display: block; }
 
-  .info { font-family: var(--sans); font-size: 0.66rem; font-weight: 700;
-          width: 15px; height: 15px; line-height: 13px; text-align: center;
-          border: 1px solid var(--line); border-radius: 50%; background: #fff;
-          color: var(--muted); cursor: pointer; padding: 0; margin-left: 6px;
-          vertical-align: 1px; }
-  .info:hover { border-color: var(--ink); color: var(--ink); }
   dialog#why { max-width: 470px; width: calc(100% - 32px); border: 1px solid var(--line);
                border-radius: 6px; padding: 0; color: var(--ink); }
   dialog#why::backdrop { background: rgba(0, 0, 0, 0.35); }
@@ -96,12 +90,13 @@
     <h1>How long does exiting the Coastal Road southbound at Breach Candy actually take?</h1>
     <p class="dek">A continuous measurement of southbound travel time across the
     segment exiting the Coastal Road toward Napean Sea Road, sampled every ten
-    minutes from the Google Routes API.<button class="info" id="whyBtn"
-    aria-label="Why is this number accurate?" title="Why is this accurate?">i</button></p>
+    minutes from the Google Routes API.</p>
     <p class="actions">
       <button class="linkbtn" id="whyMeasureBtn">Why measure this?</button>
       <span class="sep">·</span>
-      <button class="linkbtn" id="routeBtn">View the exact route measured →</button>
+      <button class="linkbtn" id="routeBtn">What route is measured?</button>
+      <span class="sep">·</span>
+      <button class="linkbtn" id="accuracyBtn">How accurate is this?</button>
       <span class="sep">·</span>
       <a class="linkbtn" id="contactLink" href="#">Have a suggestion?</a>
     </p>
@@ -314,7 +309,7 @@ function render() {
 }
 
 const whyDlg = document.getElementById("why");
-document.getElementById("whyBtn").addEventListener("click", () => whyDlg.showModal());
+document.getElementById("accuracyBtn").addEventListener("click", () => whyDlg.showModal());
 whyDlg.addEventListener("click", (e) => { if (e.target === whyDlg) whyDlg.close(); });
 
 // Route map. Use a SEPARATE Maps Embed API key, restricted to this site's domain
