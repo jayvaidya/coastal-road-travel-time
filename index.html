@@ -222,7 +222,11 @@ function pct(sorted, p) {
   const lo = Math.floor(k), hi = Math.min(lo + 1, sorted.length - 1);
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (k - lo);
 }
-function hourLabel(h) { return String(h).padStart(2, "0") + ":00"; }
+function hourLabel(h) {            // 20 -> "8:00 PM" (avoid 24h, which reads like minutes)
+  const ampm = h < 12 ? "AM" : "PM";
+  const hr = (h % 12) || 12;
+  return hr + ":00 " + ampm;
+}
 
 let ROWS = [], GLOBAL_HOURS = [], FREEFLOW = null, MODE = "wk", chart;
 
@@ -283,7 +287,7 @@ function renderCards(computed, ymin, ymax) {
       </div>
       ${sparkSVG(c.p50, c.color, ymin, ymax)}
       <div class="card-f">typical ${c.typical != null ? c.typical.toFixed(1) : "—"} min`
-        + (c.peak.hour != null ? ` · peak ${hourLabel(c.peak.hour)}` : "")
+        + (c.peak.hour != null ? ` · peak at ${hourLabel(c.peak.hour)}` : "")
         + (c.peak.idx >= 0 && c.p10[c.peak.idx] != null && c.p90[c.peak.idx] != null
             ? ` (usually ${c.p10[c.peak.idx].toFixed(1)}–${c.p90[c.peak.idx].toFixed(1)} min)` : "")
         + `</div>
