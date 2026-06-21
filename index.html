@@ -131,8 +131,9 @@
       <div class="chart-wrap"><canvas id="chart"></canvas></div>
       <figcaption><b>Figure 1.</b> Median travel time by hour of day (IST), one
       line per group. The dashed line marks free-flow (no-traffic) time. Hover a
-      point to see that hour's 10th to 90th percentile range. Travel times are
-      Google Routes API estimates, not measurements of individual vehicles.</figcaption>
+      point to see the range most trips fall within for that hour (its 10th to
+      90th percentile). Travel times are Google Routes API estimates, not
+      measurements of individual vehicles.</figcaption>
     </figure>
     <div class="cards" id="cards"></div>
   </div>
@@ -284,7 +285,7 @@ function renderCards(computed, ymin, ymax) {
       <div class="card-f">typical ${c.typical != null ? c.typical.toFixed(1) : "—"} min`
         + (c.peak.hour != null ? ` · peak ${hourLabel(c.peak.hour)}` : "")
         + (c.peak.idx >= 0 && c.p10[c.peak.idx] != null && c.p90[c.peak.idx] != null
-            ? ` (${c.p10[c.peak.idx].toFixed(1)}–${c.p90[c.peak.idx].toFixed(1)} min)` : "")
+            ? ` (usually ${c.p10[c.peak.idx].toFixed(1)}–${c.p90[c.peak.idx].toFixed(1)} min)` : "")
         + `</div>
     </div>`).join("");
 }
@@ -320,7 +321,7 @@ function renderChart(computed) {
             if (ds.label === "Free-flow") return `free-flow ${ctx.parsed.y.toFixed(1)} min`;
             let s = `${ds.label}: ${ctx.parsed.y.toFixed(1)} min`;
             const lo = ds._p10 && ds._p10[i], hi = ds._p90 && ds._p90[i];
-            if (lo != null && hi != null) s += `  (p10 ${lo.toFixed(1)} – p90 ${hi.toFixed(1)})`;
+            if (lo != null && hi != null) s += ` · usually ${lo.toFixed(1)}–${hi.toFixed(1)} min`;
             return s;
           },
         } },
