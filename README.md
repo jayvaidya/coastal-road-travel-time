@@ -20,14 +20,14 @@ road and, say, 2.5 means the trip took two and a half times as long as it would
 on an empty road.
 
 Readings are grouped by hour of day and day of week. For each group we report the
-median along with the 10th and 90th percentiles, so the summary shows both the
-typical trip and how much it varies.
+median along with a range of percentiles (such as the 10th, 80th and 95th), so the
+summary shows both the typical trip and how much it varies.
 
 ## Method, and why the data is collected live
 
-Travel times are sampled from the Google Routes API at fixed intervals, around
-the clock, over a period of several weeks. Each reading is stored with the exact
-time it was taken.
+Travel times are sampled from the Google Routes API every ten minutes through
+the day, roughly between 7 am and 11 pm, over a period of several weeks. Each
+reading is stored with the exact time it was taken.
 
 Sampling is done live on purpose. A live reading reflects the road as it actually
 is at the moment of measurement, so it captures real congestion: incidents,
@@ -53,8 +53,12 @@ be checked:
 
 ## How the data can be trusted
 
-- The raw readings are published in full. Nothing is withheld or filtered out,
-  apart from marking failed API requests as failures.
+- The raw readings are published in full and never deleted, so the complete
+  record stays open to inspection.
+- Two kinds of reading are left out of the summary statistics, and both remain
+  visible in the raw data: failed API requests, and readings whose route distance
+  shows the service snapped to the wrong path (for example, a U-turn), which would
+  otherwise distort the travel time.
 - Every reading carries an exact timestamp and notes its data source.
 - The travel times come from the Google Routes API, the same routing service
   available to the public, applied the same way to every reading.
@@ -67,7 +71,8 @@ be checked:
 |---|---|
 | `config.json` | The measured segment (origin and destination coordinates) |
 | `collect.py` | Samples the routing API and appends one timestamped reading |
-| `analyze.py` | Aggregates readings into an hour-by-hour summary |
+| `analyze.py` | Aggregates readings by day of week and hour of day |
+| `index.html` | The public web page that charts the readings |
 | `data/travel_times.csv` | The complete raw record of readings |
 | `.github/workflows/collect.yml` | The scheduled collection job |
 
@@ -77,6 +82,5 @@ be checked:
 python analyze.py   # prints the hour-by-hour summary and writes summary.csv
 ```
 
-Several weeks of continuous collection are needed before the numbers mean much,
-so that each hour-of-day and day-of-week group holds enough readings to be
-informative.
+Several weeks of collection are needed before the numbers mean much, so that each
+hour-of-day and day-of-week group holds enough readings to be informative.
