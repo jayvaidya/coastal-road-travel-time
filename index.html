@@ -130,9 +130,9 @@
     <figure class="panel-main">
       <div class="chart-wrap"><canvas id="chart"></canvas></div>
       <figcaption><b>Figure 1.</b> Median travel time by hour of day (IST), one
-      line per group. The dashed line marks free-flow (no-traffic) time. Travel
-      times are Google Routes API estimates, not measurements of individual
-      vehicles.</figcaption>
+      line per group. The dashed line marks free-flow (no-traffic) time. Hover a
+      point to see that hour's 10th to 90th percentile range. Travel times are
+      Google Routes API estimates, not measurements of individual vehicles.</figcaption>
     </figure>
     <div class="cards" id="cards"></div>
   </div>
@@ -239,14 +239,18 @@ function computeSeries(dows) {
     (byHour[r.hour] = byHour[r.hour] || []).push(r.min);
     all.push(r.min);
   }
-  const p50 = GLOBAL_HOURS.map(h => {
+  const p10 = [], p50 = [], p90 = [];
+  GLOBAL_HOURS.forEach(h => {
     const v = byHour[h];
-    return v && v.length ? pct(v.slice().sort((a, b) => a - b), 50) : null;
+    if (v && v.length) {
+      const s = v.slice().sort((a, b) => a - b);
+      p10.push(pct(s, 10)); p50.push(pct(s, 50)); p90.push(pct(s, 90));
+    } else { p10.push(null); p50.push(null); p90.push(null); }
   });
   const typical = all.length ? pct(all.slice().sort((a, b) => a - b), 50) : null;
-  let peak = { hour: null, val: -Infinity };
-  GLOBAL_HOURS.forEach((h, i) => { if (p50[i] != null && p50[i] > peak.val) peak = { hour: h, val: p50[i] }; });
-  return { p50, typical, peak, total: all.length };
+  let peak = { hour: null, val: -Infinity, idx: -1 };
+  GLOBAL_HOURS.forEach((h, i) => { if (p50[i] != null && p50[i] > peak.val) peak = { hour: h, val: p50[i], idx: i }; });
+  return { p10, p50, p90, typical, peak, total: all.length };
 }
 
 function sparkSVG(p50, color, ymin, ymax) {
@@ -278,7 +282,10 @@ function renderCards(computed, ymin, ymax) {
       </div>
       ${sparkSVG(c.p50, c.color, ymin, ymax)}
       <div class="card-f">typical ${c.typical != null ? c.typical.toFixed(1) : "—"} min`
-        + (c.peak.hour != null ? ` · peak ${hourLabel(c.peak.hour)}` : "") + `</div>
+        + (c.peak.hour != null ? ` · peak ${hourLabel(c.peak.hour)}` : "")
+        + (c.peak.idx >= 0 && c.p10[c.peak.idx] != null && c.p90[c.peak.idx] != null
+            ? ` (${c.p10[c.peak.idx].toFixed(1)}–${c.p90[c.peak.idx].toFixed(1)} min)` : "")
+        + `</div>
     </div>`).join("");
 }
 
@@ -287,6 +294,7 @@ function renderChart(computed) {
   const datasets = computed.map(c => ({
     label: c.name, data: c.p50, borderColor: c.color, backgroundColor: c.color,
     fill: false, pointRadius: 2, borderWidth: 1.6, tension: 0, spanGaps: true,
+    _p10: c.p10, _p90: c.p90,
   }));
   if (FREEFLOW != null) datasets.push({
     label: "Free-flow", data: labels.map(() => FREEFLOW), borderColor: "#9aa0a8",
@@ -305,8 +313,17 @@ function renderChart(computed) {
     plugins: {
       legend: { display: false },
       tooltip: { backgroundColor: "#1a1a1a", cornerRadius: 3, padding: 8,
-        callbacks: { label: (ctx) => ctx.parsed.y == null ? null
-          : `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} min` } },
+        callbacks: {
+          label: (ctx) => {
+            if (ctx.parsed.y == null) return null;
+            const ds = ctx.dataset, i = ctx.dataIndex;
+            if (ds.label === "Free-flow") return `free-flow ${ctx.parsed.y.toFixed(1)} min`;
+            let s = `${ds.label}: ${ctx.parsed.y.toFixed(1)} min`;
+            const lo = ds._p10 && ds._p10[i], hi = ds._p90 && ds._p90[i];
+            if (lo != null && hi != null) s += `  (p10 ${lo.toFixed(1)} – p90 ${hi.toFixed(1)})`;
+            return s;
+          },
+        } },
     },
   };
   if (chart) { chart.data = { labels, datasets }; chart.options = opts; chart.update(); }
