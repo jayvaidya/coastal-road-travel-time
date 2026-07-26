@@ -3315,3 +3315,4 @@ ts_utc,ts_ist,dow,hour_ist,route_id,origin_name,dest_name,duration_sec,static_du
 2026-07-26T06:00:23+00:00,2026-07-26T11:30:23+05:30,Sun,11,coastal_to_napeansea,Coastal Road southbound nr Breach Candy,Napean Sea Road,257,273,1525,0.941,ok
 2026-07-26T06:10:17+00:00,2026-07-26T11:40:17+05:30,Sun,11,coastal_to_napeansea,Coastal Road southbound nr Breach Candy,Napean Sea Road,368,273,1525,1.348,ok
 2026-07-26T06:20:18+00:00,2026-07-26T11:50:18+05:30,Sun,11,coastal_to_napeansea,Coastal Road southbound nr Breach Candy,Napean Sea Road,309,273,1525,1.132,ok
+2026-07-26T06:30:19+00:00,2026-07-26T12:00:19+05:30,Sun,12,coastal_to_napeansea,Coastal Road southbound nr Breach Candy,Napean Sea Road,291,273,1525,1.066,ok
